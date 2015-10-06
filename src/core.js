@@ -8,10 +8,13 @@
 var version  = require('../package.json').version;
 var helpers  = require('./helpers.js');
 var request  = require('request');
+var FormData = require('form-data');
 var _        = require('lodash');
 var Promise  = require('bluebird');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
+var fs = require('fs');
+var path = require('path');
 
 var defaultOptions = {
   qsStringifyOptions: {arrayFormat: 'repeat'},
@@ -202,6 +205,28 @@ var paramIdReq = function paramIdReq(config) {
 };
 
 var apiRequest = function apiRequest(config, cb) {
+
+  if (config.method === "POST"){
+    if (config.json && config.json.file){ // testing for undefined and for file
+      defaultOptions.headers = {
+        'User-Agent': 'syncano/version:' + version,
+        'Content-Type': 'multipart/form-data'
+      };
+
+      //var formData = {
+      //  file: config.json.file
+      //};
+
+      var formData = new FormData();
+      console.log(config.json.file);
+      formData.append('file', fs.createReadStream(config.json.file));
+
+      config.json.file = formData;
+
+      console.log(formData);
+    }
+  }
+
   var opt = _.merge({}, defaultOptions, config, helpers.addAuth(config));
   opt.url = url(opt);
   opt.baseUrl = config.baseUrl || 'https://api.syncano.io/v1';
